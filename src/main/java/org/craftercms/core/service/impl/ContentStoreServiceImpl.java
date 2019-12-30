@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2007-2013 Crafter Software Corporation.
+ * Copyright (C) 2007-2019 Crafter Software Corporation. All Rights Reserved.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,13 +17,13 @@
 package org.craftercms.core.service.impl;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.commons.codec.digest.DigestUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.craftercms.core.exception.AuthenticationException;
@@ -143,12 +143,10 @@ public class ContentStoreServiceImpl extends AbstractCachedContentStoreService {
      * {@inheritDoc}
      */
     @Override
-    public Context createContext(String storeType, String storeServerUrl, String username, String password, String rootFolderPath,
-                                 boolean mergingOn, boolean cacheOn, int maxAllowedItemsInCache,
-                                 boolean ignoreHiddenFiles) throws InvalidStoreTypeException, RootFolderNotFoundException, StoreException,
-        AuthenticationException {
-        String id = createContextId(storeType, storeServerUrl, username, password, rootFolderPath, cacheOn,
-                                    maxAllowedItemsInCache, ignoreHiddenFiles);
+    public Context getContext(String tag, String storeType, String rootFolderPath, boolean mergingOn,
+                              boolean cacheOn, int maxAllowedItemsInCache, boolean ignoreHiddenFiles)
+        throws InvalidStoreTypeException, RootFolderNotFoundException, StoreException, AuthenticationException {
+        String id = createContextId(tag, storeType, rootFolderPath, cacheOn, maxAllowedItemsInCache, ignoreHiddenFiles);
 
         if (!contexts.containsKey(id)) {
             ContentStoreAdapter storeAdapter = storeAdapterRegistry.get(storeType);
@@ -156,8 +154,8 @@ public class ContentStoreServiceImpl extends AbstractCachedContentStoreService {
                 throw new InvalidStoreTypeException("No registered content store adapter for store type " + storeType);
             }
 
-            Context context = storeAdapter.createContext(id, storeServerUrl, username, password, rootFolderPath,
-                                                         mergingOn, cacheOn, maxAllowedItemsInCache, ignoreHiddenFiles);
+            Context context = storeAdapter.createContext(id, rootFolderPath, mergingOn, cacheOn,
+                                                         maxAllowedItemsInCache, ignoreHiddenFiles);
 
             cacheTemplate.getCacheService().addScope(context);
 
@@ -165,7 +163,7 @@ public class ContentStoreServiceImpl extends AbstractCachedContentStoreService {
 
             return context;
         } else {
-            throw new StoreException("A context for id '" + id + "' already exists");
+            return contexts.get(id);
         }
     }
 
@@ -192,19 +190,19 @@ public class ContentStoreServiceImpl extends AbstractCachedContentStoreService {
         }
     }
 
-    @Override
-    public boolean exists(Context context, String url) throws InvalidContextException, PathNotFoundException,
-        StoreException {
-        if (!url.startsWith("/")) {
-            url = "/" + url;
-        }
 
-        return context.getStoreAdapter().exists(context, url);
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public boolean doExists(Context context, CachingOptions cachingOptions, String url)
+        throws InvalidContextException, PathNotFoundException, StoreException {
+        return context.getStoreAdapter().exists(context, cachingOptions, StringUtils.prependIfMissing(url, "/"));
     }
 
     @Override
     public Content findContent(Context context, String url) throws InvalidContextException, StoreException {
-        return findContent(context, CachingOptions.DEFAULT_CACHING_OPTIONS, url);
+        return findContent(context, null, url);
     }
 
     @Override
@@ -219,7 +217,7 @@ public class ContentStoreServiceImpl extends AbstractCachedContentStoreService {
     @Override
     public Content getContent(Context context, String url) throws InvalidScopeException, PathNotFoundException,
         StoreException {
-        return getContent(context, CachingOptions.DEFAULT_CACHING_OPTIONS, url);
+        return getContent(context, null, url);
     }
 
     /**
@@ -263,10 +261,6 @@ public class ContentStoreServiceImpl extends AbstractCachedContentStoreService {
                 item = doProcessing(context, cachingOptions, item, processor);
             } else {
                 item = doProcessing(context, cachingOptions, item, processor);
-
-                // Since there was no merging, add the original key (from the store adapter item) as dependency key.
-                // The store service item key will be set later.
-                item.addDependencyKey(item.getKey());
             }
         }
 
@@ -311,7 +305,6 @@ public class ContentStoreServiceImpl extends AbstractCachedContentStoreService {
                                                                                              processor);
                 if (treeChildren != null) {
                     tree.setChildren(treeChildren.getActualList());
-                    tree.addDependencyKeys(treeChildren.getDependencyKeys());
                 }
             }
 
@@ -337,11 +330,8 @@ public class ContentStoreServiceImpl extends AbstractCachedContentStoreService {
     protected List<Item> doFindChildren(Context context, CachingOptions cachingOptions, String url, Integer depth,
                                         ItemFilter filter, ItemProcessor processor) throws InvalidContextException,
         XmlFileParseException, XmlMergeException, ItemProcessingException, StoreException {
-        List<Item> children = context.getStoreAdapter().findItems(context, cachingOptions, url, false);
+        List<Item> children = context.getStoreAdapter().findItems(context, cachingOptions, url);
         if (children != null) {
-            List<Object> dependencyKeys = new ArrayList<>();
-            dependencyKeys.add(((CachingAwareList<Item>)children).getKey());
-
             if (filter != null && filter.runBeforeProcessing()) {
                 if (logger.isDebugEnabled()) {
                     logger.debug("Running filter " + filter + " before processing for " + url + "...");
@@ -350,7 +340,7 @@ public class ContentStoreServiceImpl extends AbstractCachedContentStoreService {
                 children = doFilter(children, filter, true);
             }
 
-            List<Item> processedChildren = new ArrayList<Item>(children.size());
+            List<Item> processedChildren = new ArrayList<>(children.size());
 
             for (Item child : children) {
                 Item processedChild;
@@ -371,16 +361,9 @@ public class ContentStoreServiceImpl extends AbstractCachedContentStoreService {
                 processedChildren = doFilter(processedChildren, filter, false);
             }
 
-            Collections.sort(processedChildren, CompareByItemNameComparator.instance);
+            processedChildren.sort(CompareByItemNameComparator.instance);
 
-            for (Item child : processedChildren) {
-                dependencyKeys.add(child.getKey());
-            }
-
-            CachingAwareList<Item> finalChildren = new CachingAwareList<Item>(processedChildren);
-            finalChildren.setDependencyKeys(dependencyKeys);
-
-            return finalChildren;
+            return new CachingAwareList<>(processedChildren);
         } else {
             return null;
         }
@@ -429,7 +412,7 @@ public class ContentStoreServiceImpl extends AbstractCachedContentStoreService {
                 logger.debug("Descriptors to merge for " + mainDescriptorUrl + ": " + descriptorsToMerge);
             }
 
-            List<Document> documentsToMerge = new ArrayList<Document>(descriptorsToMerge.size());
+            List<Document> documentsToMerge = new ArrayList<>(descriptorsToMerge.size());
 
             for (MergeableDescriptor descriptorToMerge : descriptorsToMerge) {
                 String descriptorUrl = descriptorToMerge.getUrl();
@@ -443,8 +426,6 @@ public class ContentStoreServiceImpl extends AbstractCachedContentStoreService {
                     }
 
                     documentsToMerge.add(descriptorDom);
-
-                    item.addDependencyKey(descriptorItem.getKey());
                 } else if (!descriptorToMerge.isOptional()) {
                     throw new XmlMergeException("Descriptor file " + descriptorUrl + " not found and is marked as required for merging");
                 }
@@ -528,17 +509,14 @@ public class ContentStoreServiceImpl extends AbstractCachedContentStoreService {
         return acceptedItems;
     }
 
-    protected String createContextId(String storeType, String storeServerUrl, String username, String password,
-                                     String rootFolderPath, boolean cacheOn, int maxAllowedItemsInCache,
-                                     boolean ignoreHiddenFiles) {
-        String unHashedId = "storeType='" + storeType + '\'' +
-            ", storeServerUrl='" + storeServerUrl + '\'' +
-            ", username='" + username + '\'' +
-            ", password='" + password + '\'' +
-            ", rootFolderPath='" + rootFolderPath + '\'' +
-            ", cacheOn=" + cacheOn +
-            ", maxAllowedItemsInCache=" + maxAllowedItemsInCache +
-            ", ignoreHiddenFiles=" + ignoreHiddenFiles;
+    protected String createContextId(String tag, String storeType, String rootFolderPath, boolean cacheOn,
+                                     int maxAllowedItemsInCache, boolean ignoreHiddenFiles) {
+        String unHashedId = "tag='" + (tag != null ? tag : "") + "'" +
+                            ", storeType='" + storeType + '\'' +
+                            ", rootFolderPath='" + rootFolderPath + '\'' +
+                            ", cacheOn=" + cacheOn +
+                            ", maxAllowedItemsInCache=" + maxAllowedItemsInCache +
+                            ", ignoreHiddenFiles=" + ignoreHiddenFiles;
 
         return DigestUtils.md5Hex(unHashedId);
     }

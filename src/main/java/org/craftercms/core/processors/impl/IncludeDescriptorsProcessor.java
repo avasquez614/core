@@ -1,19 +1,19 @@
 /*
-* Copyright (C) 2007-2013 Crafter Software Corporation.
-*
-* This program is free software: you can redistribute it and/or modify
-* it under the terms of the GNU General Public License as published by
-* the Free Software Foundation, either version 3 of the License, or
-* (at your option) any later version.
-*
-* This program is distributed in the hope that it will be useful,
-* but WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-* GNU General Public License for more details.
-*
-* You should have received a copy of the GNU General Public License
-* along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
+ * Copyright (C) 2007-2019 Crafter Software Corporation. All Rights Reserved.
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 package org.craftercms.core.processors.impl;
 
 import java.net.URISyntaxException;
@@ -38,8 +38,8 @@ import org.dom4j.Node;
 import org.springframework.beans.factory.annotation.Required;
 
 /**
- * {@link org.craftercms.core.processors.ItemProcessor} that replaces special "include" tags found in a descriptor
- * document with the document tree of descriptors specified in these "include" tags.
+ * {@link org.craftercms.core.processors.ItemProcessor} that finds special "include" tags found in a descriptor
+ * document and inserts there the document tree of descriptors specified in these "include" tags.
  *
  * @author Sumer Jabri
  * @author Alfonso Vásquez
@@ -54,6 +54,10 @@ public class IncludeDescriptorsProcessor implements ItemProcessor {
      * XPath query for the include element.
      */
     protected String includeElementXPathQuery;
+    /**
+     * Flag to indicate if the include element should be removed (false by default).
+     */
+    protected boolean removeIncludeElement;
     /**
      * XPath query relative to include elements for nodes tha specify if the include is disabled or not.
      */
@@ -73,6 +77,13 @@ public class IncludeDescriptorsProcessor implements ItemProcessor {
     @Required
     public void setIncludeElementXPathQuery(String includeElementXPathQuery) {
         this.includeElementXPathQuery = includeElementXPathQuery;
+    }
+
+    /**
+     * Sets the flag to indicate if the include element should be removed (false by default).
+     */
+    public void setRemoveIncludeElement(boolean removeIncludeElement) {
+        this.removeIncludeElement = removeIncludeElement;
     }
 
     /**
@@ -185,13 +196,15 @@ public class IncludeDescriptorsProcessor implements ItemProcessor {
         int includeElementIdx = includeElementParentChildren.indexOf(includeElement);
         Element itemToIncludeRootElement = itemToInclude.getDescriptorDom().getRootElement().createCopy();
 
-        // Remove the <include> element
-        includeElementParentChildren.remove(includeElementIdx);
-        // Add the item's root element
-        includeElementParentChildren.add(includeElementIdx, itemToIncludeRootElement);
-
-        // Add dependency key
-        item.addDependencyKey(itemToInclude.getKey());
+        if (removeIncludeElement) {
+            // Remove the <include> element
+            includeElementParentChildren.remove(includeElementIdx);
+            // Add the item's root element
+            includeElementParentChildren.add(includeElementIdx, itemToIncludeRootElement);
+        } else {
+            // Add the item's root element
+            includeElementParentChildren.add(includeElementIdx + 1, itemToIncludeRootElement);
+        }
 
         if (logger.isDebugEnabled()) {
             logger.debug("Item " + itemToInclude.getDescriptorUrl() + " included into " + item.getDescriptorUrl());

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2007-2013 Crafter Software Corporation.
+ * Copyright (C) 2007-2019 Crafter Software Corporation. All Rights Reserved.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -55,6 +55,11 @@ public class DefaultCacheTemplate implements CacheTemplate {
     }
 
     @Override
+    public boolean hasObject(Context context, Object... keyElements) {
+        return cacheService.hasKey(context, getKey(keyElements));
+    }
+
+    @Override
     public <T> T getObject(Context context, Callback<T> callback, Object... keyElements) {
         return getObject(context, null, callback, keyElements);
     }
@@ -104,14 +109,7 @@ public class DefaultCacheTemplate implements CacheTemplate {
 
     protected <T> CacheLoader getCacheLoader(final Callback<T> callback, long refreshFrequency) {
         if (refreshFrequency != CacheItem.NEVER_REFRESH) {
-            return new CacheLoader() {
-
-                @Override
-                public Object load(Object... parameters) throws Exception {
-                    return callback.execute();
-                }
-
-            };
+            return parameters -> callback.execute();
         } else {
             return null;
         }

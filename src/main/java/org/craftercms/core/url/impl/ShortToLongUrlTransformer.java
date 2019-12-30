@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2007-2013 Crafter Software Corporation.
+ * Copyright (C) 2007-2019 Crafter Software Corporation. All Rights Reserved.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -71,7 +71,7 @@ public class ShortToLongUrlTransformer implements UrlTransformer {
     protected String getLongName(Context context, CachingOptions cachingOptions, String folderPath,
                                  String shortName) throws UrlTransformationException {
         try {
-            List<Item> items = context.getStoreAdapter().findItems(context, cachingOptions, folderPath, false);
+            List<Item> items = context.getStoreAdapter().findItems(context, cachingOptions, folderPath);
             if (CollectionUtils.isNotEmpty(items)) {
                 for (Item item : items) {
                     String itemName = item.getName();

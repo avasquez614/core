@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2007-2013 Crafter Software Corporation.
+ * Copyright (C) 2007-2019 Crafter Software Corporation. All Rights Reserved.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -153,9 +153,10 @@ public class ContentStoreServiceImplTest {
 
     @Before
     public void setUp() throws Exception {
-        context = contentStoreService.createContext(FileSystemContentStoreAdapter.STORE_TYPE, null, null, null,
-                                                    CLASSPATH_STORE_ROOT_FOLDER_PATH, DEFAULT_MERGING_ON, DEFAULT_CACHE_ON,
-                                                    DEFAULT_MAX_ALLOWED_ITEMS_IN_CACHE, DEFAULT_IGNORE_HIDDEN_FILES);
+        context = contentStoreService.getContext(null, FileSystemContentStoreAdapter.STORE_TYPE,
+                                                 CLASSPATH_STORE_ROOT_FOLDER_PATH, DEFAULT_MERGING_ON,
+                                                 DEFAULT_CACHE_ON, DEFAULT_MAX_ALLOWED_ITEMS_IN_CACHE,
+                                                 DEFAULT_IGNORE_HIDDEN_FILES);
     }
 
     @After
@@ -670,7 +671,6 @@ public class ContentStoreServiceImplTest {
     private void assertCaching(CachingAwareObject expected, CachingAwareObject actual) {
         assertEquals(expected.getScope(), actual.getScope());
         assertEquals(expected.getKey(), actual.getKey());
-        assertEquals(expected.getDependencyKeys(), actual.getDependencyKeys());
         assertEquals(expected.getCachingTime(), actual.getCachingTime());
 
         assertTrue(cache.hasKey(context, actual.getKey()));

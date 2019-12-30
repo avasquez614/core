@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2007-2013 Crafter Software Corporation.
+ * Copyright (C) 2007-2019 Crafter Software Corporation. All Rights Reserved.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,13 +19,11 @@ package org.craftercms.core.store.impl;
 import org.craftercms.core.service.Content;
 
 /**
- * Abstraction of a file in a content store. Used by adapters to have direct access to a file,
- * whether it's local or remote. Also,
- * returned as {@link Content} when the content shouldn't be cached.
+ * Abstraction of a file in a content store.
  *
  * @author Alfonso Vásquez
  */
-public interface File extends Content {
+public interface File {
 
     String getName();
 

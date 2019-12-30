@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2007-2013 Crafter Software Corporation.
+ * Copyright (C) 2007-2019 Crafter Software Corporation. All Rights Reserved.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,31 +16,13 @@
  */
 package org.craftercms.core.store;
 
-import java.util.HashMap;
-import java.util.Map;
-
-import org.craftercms.core.util.spring.AbstractBeanIdBasedRegistry;
-
 /**
- * {@link AbstractBeanIdBasedRegistry} for {@link ContentStoreAdapter}.
+ * Registry for {@link ContentStoreAdapter}s.
  *
  * @author Alfonso Vásquez
  */
-public class ContentStoreAdapterRegistry extends AbstractBeanIdBasedRegistry<ContentStoreAdapter> {
+public interface ContentStoreAdapterRegistry {
 
-    @Override
-    protected Class<ContentStoreAdapter> getRegistryType() {
-        return ContentStoreAdapter.class;
-    }
-
-    @Override
-    protected String getBeanNameIdPrefix() {
-        return "crafter.contentStoreAdapter.";
-    }
-
-    @Override
-    protected Map<String, ContentStoreAdapter> createRegistry() {
-        return new HashMap<String, ContentStoreAdapter>();
-    }
+    ContentStoreAdapter get(String storeType);
 
 }

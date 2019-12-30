@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2007-2013 Crafter Software Corporation.
+ * Copyright (C) 2007-2019 Crafter Software Corporation. All Rights Reserved.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -41,6 +41,16 @@ public interface CacheTemplate {
      * @return the key
      */
     Object getKey(Object... keyElements);
+
+    /**
+     * Returns true if the cache contains an object for the specified key elements
+     *
+     * @param context       the context (needed by the cache service)
+     * @param keyElements   the key elements, used to create the final cache key
+     *
+     * @return true if the cache contains an object for the specified key elements
+     */
+    boolean hasObject(Context context, Object... keyElements);
 
     /**
      * Executes the template, using the specified callback to load the object to cache, if it's not already in the

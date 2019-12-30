@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2007-2013 Crafter Software Corporation.
+ * Copyright (C) 2007-2019 Crafter Software Corporation. All Rights Reserved.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,6 +21,7 @@ import java.util.List;
 
 import org.craftercms.core.cache.CacheItem;
 import org.craftercms.core.cache.CacheLoader;
+import org.craftercms.core.cache.CacheStatistics;
 import org.craftercms.core.exception.InternalCacheEngineException;
 import org.craftercms.core.exception.InvalidContextException;
 import org.craftercms.core.exception.InvalidScopeException;
@@ -87,22 +88,10 @@ public interface CacheService {
     void put(Context context, Object key, Object value) throws InvalidContextException, InternalCacheEngineException;
 
     /**
-     * Puts an item in the scope of the given context.
-     */
-    void put(Context context, Object key, Object value, List<Object> dependencyKeys) throws InvalidScopeException,
-        InternalCacheEngineException;
-
-    /**
      * Puts and item in the scope of the given context.
      */
     void put(Context context, Object key, Object value, CachingOptions cachingOptions, CacheLoader loader,
              Object... loaderParams) throws InvalidContextException, InternalCacheEngineException;
-
-    /**
-     * Puts and item in the scope of the given context.
-     */
-    void put(Context context, Object key, Object value, List<Object> dependencyKeys, CachingOptions cachingOptions,
-             CacheLoader loader, Object... loaderParams) throws InvalidContextException, InternalCacheEngineException;
 
     /**
      * Removes an item from the scope of the given context.
@@ -113,5 +102,10 @@ public interface CacheService {
      * Clears the contents of the scope of the given context.
      */
     void clearScope(Context context) throws InvalidContextException, InternalCacheEngineException;
+
+    /**
+     * Returns the statistics for the scope of the given context.
+     */
+    CacheStatistics getStatistics(Context context);
 
 }

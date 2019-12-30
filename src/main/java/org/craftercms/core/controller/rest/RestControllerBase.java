@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2007-2013 Crafter Software Corporation.
+ * Copyright (C) 2007-2019 Crafter Software Corporation. All Rights Reserved.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -26,6 +26,7 @@ import org.craftercms.commons.validation.ValidationException;
 import org.craftercms.commons.validation.ValidationResult;
 import org.craftercms.commons.validation.ValidationRuntimeException;
 import org.craftercms.core.exception.AuthenticationException;
+import org.craftercms.core.exception.ForbiddenPathException;
 import org.craftercms.core.exception.InvalidContextException;
 import org.craftercms.core.exception.PathNotFoundException;
 import org.springframework.http.HttpStatus;
@@ -34,67 +35,20 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 
 /**
- * Base class for all Crafter REST services. Handles exceptions thrown by service methods.
+ * Base class for Crafter REST services
  *
- * @author Alfonso Vásquez
+ * @author avasquez
  */
 public class RestControllerBase {
-
-    private static final Log logger = LogFactory.getLog(RestControllerBase.class);
 
     public static final String REST_BASE_URI = "${crafter.core.rest.base.uri}";
     public static final String MESSAGE_MODEL_ATTRIBUTE_NAME = "message";
 
-    @ExceptionHandler(InvalidContextException.class)
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
-    @ResponseBody
-    public Map<String, Object> handleInvalidContextException(HttpServletRequest request, InvalidContextException e) {
-        return handleException(request, e);
+    protected Map<String, Object> createResponseMessage(String message) {
+        return createSingletonModifiableMap(MESSAGE_MODEL_ATTRIBUTE_NAME, message);
     }
 
-    @ExceptionHandler(AuthenticationException.class)
-    @ResponseStatus(HttpStatus.UNAUTHORIZED)
-    @ResponseBody
-    public Map<String, Object> handleAuthenticationException(HttpServletRequest request, AuthenticationException e) {
-        return handleException(request, e);
-    }
-
-    @ExceptionHandler(PathNotFoundException.class)
-    @ResponseStatus(HttpStatus.NOT_FOUND)
-    @ResponseBody
-    public Map<String, Object> handlePathNotFoundException(HttpServletRequest request, PathNotFoundException e) {
-        return handleException(request, e);
-    }
-
-    @ExceptionHandler(ValidationException.class)
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
-    @ResponseBody
-    public ValidationResult handleValidationException(HttpServletRequest request, ValidationException e) {
-        logger.error("Request for " + request.getRequestURI() + " failed", e);
-
-        return e.getResult();
-    }
-
-    @ExceptionHandler(ValidationRuntimeException.class)
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
-    @ResponseBody
-    public ValidationResult handleValidationRuntimeException(HttpServletRequest request, ValidationRuntimeException e) {
-        logger.error("Request for " + request.getRequestURI() + " failed", e);
-
-        return e.getResult();
-    }
-
-    @ExceptionHandler(Exception.class)
-    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
-    @ResponseBody
-    public Map<String, Object> handleException(HttpServletRequest request, Exception e) {
-        logger.error("Request for " + request.getRequestURI() + " failed", e);
-
-        return createMessageModel(MESSAGE_MODEL_ATTRIBUTE_NAME, e.getMessage());
-    }
-
-    // Use instead of singleton model since it can modified
-    protected Map<String, Object> createMessageModel(String attributeName, Object attributeValue) {
+    protected Map<String, Object> createSingletonModifiableMap(String attributeName, Object attributeValue) {
         Map<String, Object> model = new HashMap<>(1);
         model.put(attributeName, attributeValue);
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2007-2013 Crafter Software Corporation.
+ * Copyright (C) 2007-2019 Crafter Software Corporation. All Rights Reserved.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -37,23 +37,24 @@ import org.craftercms.core.service.Item;
  */
 public interface ContentStoreAdapter {
 
-    Context createContext(String id, String storeServerUrl, String username, String password, String rootFolderPath,
-                          boolean mergingOn, boolean cacheOn, int maxAllowedItemsInCache,
-                          boolean ignoreHiddenFiles) throws RootFolderNotFoundException, StoreException, AuthenticationException;
+    Context createContext(String id, String rootFolderPath, boolean mergingOn, boolean cacheOn,
+                          int maxAllowedItemsInCache, boolean ignoreHiddenFiles)
+            throws RootFolderNotFoundException, StoreException, AuthenticationException;
 
     boolean validate(Context context) throws StoreException, AuthenticationException;
 
     void destroyContext(Context context) throws StoreException, AuthenticationException;
 
-    boolean exists(Context context, String path) throws InvalidContextException, StoreException;
+    boolean exists(Context context, CachingOptions cachingOptions, String path)
+        throws InvalidContextException, StoreException;
 
-    Content findContent(Context context, CachingOptions cachingOptions,
-                        String path) throws InvalidContextException, StoreException;
+    Content findContent(Context context, CachingOptions cachingOptions, String path)
+            throws InvalidContextException, StoreException;
 
-    Item findItem(Context context, CachingOptions cachingOptions, String path,
-                  boolean withDescriptor) throws InvalidContextException, XmlFileParseException, StoreException;
+    Item findItem(Context context, CachingOptions cachingOptions, String path, boolean withDescriptor)
+            throws InvalidContextException, XmlFileParseException, StoreException;
 
-    List<Item> findItems(Context context, CachingOptions cachingOptions, String path,
-                         boolean withDescriptor) throws InvalidContextException, XmlFileParseException, StoreException;
+    List<Item> findItems(Context context, CachingOptions cachingOptions, String path)
+            throws InvalidContextException, XmlFileParseException, StoreException;
 
 }

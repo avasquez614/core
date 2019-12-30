@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2007-2013 Crafter Software Corporation.
+ * Copyright (C) 2007-2019 Crafter Software Corporation. All Rights Reserved.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,6 +20,7 @@ import java.util.Collection;
 import java.util.Collections;
 
 import org.craftercms.core.cache.CacheItem;
+import org.craftercms.core.cache.CacheStatistics;
 import org.craftercms.core.cache.impl.CacheStoreAdapter;
 
 /**
@@ -77,4 +78,7 @@ public class NoopCacheStoreAdapter implements CacheStoreAdapter {
     public void clearScope(String scope) {
     }
 
+    public CacheStatistics getStatistics(String scope) {
+        return CacheStatistics.EMPTY;
+    }
 }

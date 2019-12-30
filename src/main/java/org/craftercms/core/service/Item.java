@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2007-2013 Crafter Software Corporation.
+ * Copyright (C) 2007-2019 Crafter Software Corporation. All Rights Reserved.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,13 +18,10 @@ package org.craftercms.core.service;
 
 import org.apache.commons.collections4.CollectionUtils;
 import org.craftercms.core.util.XmlUtils;
-import org.craftercms.core.util.cache.impl.CachingAwareObjectBase;
+import org.craftercms.core.util.cache.impl.AbstractCachingAwareObject;
 import org.dom4j.Document;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Represents an item of a content store. Content store items can be separated into 3 main categories:
@@ -35,20 +32,20 @@ import java.util.Map;
  * descriptors are in themselves items, so the item url and the descriptor url should be the same.
  * </li>
  * <li>
- * <b>Static assets</b>: Static files like images, css and javascript.
+ * <b>Regular files</b>: Regular non-descriptor files (like documents, images, templates, scripts, etc)
  * </li>
  * <li>
  * <b>Folders</b>: Plain old folders/directories.
  * </li>
  * </ol>
  * <p/>
- * <p>Both static assets and folders can have their own metadata files or descriptors. So we can also say that
- * there are two types of descriptors: standalone descriptors and (static asset and folder) metadata files.</p>
+ * <p>Both regular files and folders can have their own metadata files or descriptors. So we can also say that
+ * there are two types of descriptors: standalone descriptors and (regular file and folder) metadata files.</p>
  *
  * @author Sumer Jabri
  * @author Alfonso Vásquez
  */
-public class Item extends CachingAwareObjectBase {
+public class Item extends AbstractCachingAwareObject {
 
     /**
      * The name of the item (basically the file name).
@@ -94,7 +91,7 @@ public class Item extends CachingAwareObjectBase {
      * {@code descriptorDom} and {@code properties} are cloned.
      */
     public Item(Item item, boolean deepCopy) {
-        super(item, deepCopy);
+        super(item);
 
         name = item.name;
         url = item.url;
@@ -103,7 +100,7 @@ public class Item extends CachingAwareObjectBase {
 
         if (deepCopy) {
             descriptorDom = item.descriptorDom != null? (Document)item.descriptorDom.clone(): null;
-            properties = item.properties != null? new HashMap<String, Object>(item.properties): null;
+            properties = item.properties != null? new HashMap<>(item.properties): null;
         } else {
             descriptorDom = item.descriptorDom;
             properties = item.properties;
@@ -269,13 +266,13 @@ public class Item extends CachingAwareObjectBase {
 
         Item item = (Item)o;
 
-        if (name != null? !name.equals(item.name): item.name != null) {
+        if (!Objects.equals(name, item.name)) {
             return false;
         }
-        if (url != null? !url.equals(item.url): item.url != null) {
+        if (!Objects.equals(url, item.url)) {
             return false;
         }
-        if (descriptorUrl != null? !descriptorUrl.equals(item.descriptorUrl): item.descriptorUrl != null) {
+        if (!Objects.equals(descriptorUrl, item.descriptorUrl)) {
             return false;
         }
         if (isFolder != item.isFolder) {

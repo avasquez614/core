@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2007-2013 Crafter Software Corporation.
+ * Copyright (C) 2007-2019 Crafter Software Corporation. All Rights Reserved.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,6 +23,7 @@ import java.util.List;
 import org.craftercms.core.cache.Cache;
 import org.craftercms.core.cache.CacheItem;
 import org.craftercms.core.cache.CacheLoader;
+import org.craftercms.core.cache.CacheStatistics;
 import org.craftercms.core.exception.InternalCacheEngineException;
 import org.craftercms.core.exception.InvalidContextException;
 import org.craftercms.core.exception.InvalidScopeException;
@@ -62,7 +63,7 @@ public class CacheServiceImpl implements CacheService {
     @Override
     public void addScope(Context context) throws InternalCacheEngineException {
         if (context.isCacheOn()) {
-            cache.addScope(context.getId(), context.getMaxAllowedItemsInCache());
+            cache.addScope(context.getCacheScope(), context.getMaxAllowedItemsInCache());
         }
     }
 
@@ -70,7 +71,7 @@ public class CacheServiceImpl implements CacheService {
     public void removeScope(Context context) throws InvalidContextException, InternalCacheEngineException {
         if (context.isCacheOn()) {
             try {
-                cache.removeScope(context.getId());
+                cache.removeScope(context.getCacheScope());
             } catch (InvalidScopeException e) {
                 throw new InvalidContextException("No scope associated to context " + context);
             }
@@ -81,7 +82,7 @@ public class CacheServiceImpl implements CacheService {
     public boolean hasScope(Context context) throws InvalidContextException, InternalCacheEngineException {
         if (context.isCacheOn()) {
             try {
-                return cache.hasScope(context.getId());
+                return cache.hasScope(context.getCacheScope());
             } catch (InvalidScopeException e) {
                 throw new InvalidContextException("No scope associated to context " + context);
             }
@@ -94,7 +95,7 @@ public class CacheServiceImpl implements CacheService {
     public int getSize(Context context) throws InvalidContextException, InternalCacheEngineException {
         if (context.isCacheOn()) {
             try {
-                return cache.getSize(context.getId());
+                return cache.getSize(context.getCacheScope());
             } catch (InvalidScopeException e) {
                 throw new InvalidContextException("No scope associated to context " + context);
             }
@@ -107,7 +108,7 @@ public class CacheServiceImpl implements CacheService {
     public Collection<?> getKeys(Context context) throws InvalidContextException, InternalCacheEngineException {
         if (context.isCacheOn()) {
             try {
-                return cache.getKeys(context.getId());
+                return cache.getKeys(context.getCacheScope());
             } catch (InvalidScopeException e) {
                 throw new InvalidContextException("No scope associated to context " + context);
             }
@@ -120,7 +121,7 @@ public class CacheServiceImpl implements CacheService {
     public boolean hasKey(Context context, Object key) throws InvalidContextException, InternalCacheEngineException {
         if (context.isCacheOn()) {
             try {
-                return cache.hasKey(context.getId(), key);
+                return cache.hasKey(context.getCacheScope(), key);
             } catch (InvalidScopeException e) {
                 throw new InvalidContextException("No scope associated to context " + context);
             }
@@ -133,7 +134,7 @@ public class CacheServiceImpl implements CacheService {
     public CacheItem getItem(Context context, Object key) throws InvalidContextException, InternalCacheEngineException {
         if (context.isCacheOn()) {
             try {
-                return cache.getWithDependencyCheck(context.getId(), key);
+                return cache.get(context.getCacheScope(), key);
             } catch (InvalidScopeException e) {
                 throw new InvalidContextException("No scope associated to context " + context);
             }
@@ -146,7 +147,7 @@ public class CacheServiceImpl implements CacheService {
     public Object get(Context context, Object key) throws InvalidContextException, InternalCacheEngineException {
         if (context.isCacheOn()) {
             try {
-                CacheItem item = cache.getWithDependencyCheck(context.getId(), key);
+                CacheItem item = cache.get(context.getCacheScope(), key);
                 if (item != null) {
                     return item.getValue();
                 } else {
@@ -165,19 +166,7 @@ public class CacheServiceImpl implements CacheService {
         InternalCacheEngineException {
         if (context.isCacheOn()) {
             try {
-                cache.put(context.getId(), key, value);
-            } catch (InvalidScopeException e) {
-                throw new InvalidContextException("No scope associated to context " + context);
-            }
-        }
-    }
-
-    @Override
-    public void put(Context context, Object key, Object value, List<Object> dependencyKeys) throws
-        InvalidScopeException, InternalCacheEngineException {
-        if (context.isCacheOn()) {
-            try {
-                cache.put(context.getId(), key, value, dependencyKeys);
+                cache.put(context.getCacheScope(), key, value);
             } catch (InvalidScopeException e) {
                 throw new InvalidContextException("No scope associated to context " + context);
             }
@@ -189,21 +178,7 @@ public class CacheServiceImpl implements CacheService {
                     Object... loaderParams) throws InvalidContextException, InternalCacheEngineException {
         if (context.isCacheOn() && cachingOptions.doCaching()) {
             try {
-                cache.put(context.getId(), key, value, cachingOptions.getExpireAfter(),
-                    cachingOptions.getRefreshFrequency(), loader, loaderParams);
-            } catch (InvalidScopeException e) {
-                throw new InvalidContextException("No scope associated to context " + context);
-            }
-        }
-    }
-
-    @Override
-    public void put(Context context, Object key, Object value, List<Object> dependencyKeys,
-                    CachingOptions cachingOptions, CacheLoader loader, Object... loaderParams) throws
-        InvalidContextException, InternalCacheEngineException {
-        if (context.isCacheOn() && cachingOptions.doCaching()) {
-            try {
-                cache.put(context.getId(), key, value, dependencyKeys, cachingOptions.getExpireAfter(),
+                cache.put(context.getCacheScope(), key, value, cachingOptions.getExpireAfter(),
                     cachingOptions.getRefreshFrequency(), loader, loaderParams);
             } catch (InvalidScopeException e) {
                 throw new InvalidContextException("No scope associated to context " + context);
@@ -215,7 +190,7 @@ public class CacheServiceImpl implements CacheService {
     public boolean remove(Context context, Object key) throws InvalidContextException, InternalCacheEngineException {
         if (context.isCacheOn()) {
             try {
-                return cache.remove(context.getId(), key);
+                return cache.remove(context.getCacheScope(), key);
             } catch (InvalidScopeException e) {
                 throw new InvalidContextException("No scope associated to context " + context);
             }
@@ -228,10 +203,19 @@ public class CacheServiceImpl implements CacheService {
     public void clearScope(Context context) throws InvalidContextException, InternalCacheEngineException {
         if (context.isCacheOn()) {
             try {
-                cache.clearScope(context.getId());
+                cache.clearScope(context.getCacheScope());
             } catch (InvalidScopeException e) {
                 throw new InvalidContextException("No scope associated to context " + context);
             }
+        }
+    }
+
+    @Override
+    public CacheStatistics getStatistics(final Context context) {
+        if(context.isCacheOn()) {
+            return cache.getStatistics(context.getCacheScope());
+        } else {
+            return CacheStatistics.EMPTY;
         }
     }
 

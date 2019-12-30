@@ -1,3 +1,20 @@
+/*
+ * Copyright (C) 2007-2019 Crafter Software Corporation. All Rights Reserved.
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
 package org.craftercms.core.util.json.jackson;
 
 import com.fasterxml.jackson.core.JsonGenerator;
@@ -10,6 +27,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.lang3.ArrayUtils;
+import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.dom4j.Attribute;
 import org.dom4j.Document;
@@ -40,6 +59,9 @@ import org.dom4j.Node;
  */
 public class Dom4jDocumentJsonSerializer extends JsonSerializer<Document> {
 
+    public static final String ITEM_LIST_ATTRIBUTE_NAME = "item-list";
+    public static final String[] IGNORABLE_ATTRIBUTES = { ITEM_LIST_ATTRIBUTE_NAME };
+
     public static final String TEXT_JSON_KEY = "text";
 
     @Override
@@ -69,7 +91,9 @@ public class Dom4jDocumentJsonSerializer extends JsonSerializer<Document> {
             objectStarted = true;
 
             for (Attribute attribute : attributes) {
-                jsonGenerator.writeStringField(attribute.getName(), attribute.getValue());
+                if (!ArrayUtils.contains(IGNORABLE_ATTRIBUTES, attribute.getName())) {
+                    jsonGenerator.writeStringField(attribute.getName(), attribute.getValue());
+                }
             }
         }
 
@@ -106,9 +130,11 @@ public class Dom4jDocumentJsonSerializer extends JsonSerializer<Document> {
                 }
             }
 
+            boolean itemList = isItemList(element);
             Map<String, List<Element>> children = getChildren(element);
+
             for (Map.Entry<String, List<Element>> entry : children.entrySet()) {
-                if (entry.getValue().size() > 1) {
+                if (itemList || entry.getValue().size() > 1) {
                     jsonGenerator.writeArrayFieldStart(entry.getKey());
 
                     for (Element child : entry.getValue()) {
@@ -132,7 +158,7 @@ public class Dom4jDocumentJsonSerializer extends JsonSerializer<Document> {
     @SuppressWarnings("unchecked")
     private List<String> getTextContentFromMixedContent(Element element) {
         List<Node> content = element.content();
-        List<String> textContent = new ArrayList<String>();
+        List<String> textContent = new ArrayList<>();
 
         for (Node node : content) {
             if (node.getNodeType() == Node.TEXT_NODE) {
@@ -163,6 +189,10 @@ public class Dom4jDocumentJsonSerializer extends JsonSerializer<Document> {
         }
 
         return groupedChildren;
+    }
+
+    private boolean isItemList(Element element) {
+        return BooleanUtils.toBoolean(element.attributeValue(ITEM_LIST_ATTRIBUTE_NAME));
     }
 
 }

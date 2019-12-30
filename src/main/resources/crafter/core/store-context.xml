@@ -1,12 +1,24 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ~ Copyright (C) 2007-2019 Crafter Software Corporation. All Rights Reserved.
+  ~
+  ~ This program is free software: you can redistribute it and/or modify
+  ~ it under the terms of the GNU General Public License as published by
+  ~ the Free Software Foundation, either version 3 of the License, or
+  ~ (at your option) any later version.
+  ~
+  ~ This program is distributed in the hope that it will be useful,
+  ~ but WITHOUT ANY WARRANTY; without even the implied warranty of
+  ~ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  ~ GNU General Public License for more details.
+  ~
+  ~ You should have received a copy of the GNU General Public License
+  ~ along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  -->
+
 <beans xmlns="http://www.springframework.org/schema/beans"
        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
        xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
-
-    <!-- Content Store Adapter Registry -->
-    <!-- Pick ups any content store adapter defined in the Spring context -->
-
-    <bean id="crafter.contentStoreAdapterRegistry" class="org.craftercms.core.store.ContentStoreAdapterRegistry" />
 
     <!-- Content Store Adapter -->
 
@@ -18,6 +30,16 @@
             <bean class="org.craftercms.commons.validation.validators.impl.SecurePathValidator">
                 <constructor-arg value="path"/>
             </bean>
+        </property>
+    </bean>
+
+    <!-- Content Store Adapter Registry -->
+
+    <bean id="crafter.contentStoreAdapterRegistry" class="org.craftercms.core.store.impl.ContentStoreAdapterRegistryImpl" >
+        <property name="adapters">
+            <map>
+                <entry key="filesystem" value-ref="crafter.contentStoreAdapter.filesystem"/>
+            </map>
         </property>
     </bean>
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2007-2013 Crafter Software Corporation.
+ * Copyright (C) 2007-2019 Crafter Software Corporation. All Rights Reserved.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -27,15 +27,22 @@ import org.craftercms.core.cache.CacheItem;
 public class CachingOptions {
 
     public static final CachingOptions DEFAULT_CACHING_OPTIONS = new CachingOptions();
+    public static final CachingOptions CACHE_OFF_CACHING_OPTIONS = new CachingOptions(false, 0, 0);
 
     private boolean doCaching;
     private long expireAfter;
     private long refreshFrequency;
 
     public CachingOptions() {
-        doCaching = true;
-        expireAfter = CacheItem.NEVER_EXPIRE;
-        refreshFrequency = CacheItem.NEVER_REFRESH;
+        this.doCaching = true;
+        this.expireAfter = CacheItem.NEVER_EXPIRE;
+        this.refreshFrequency = CacheItem.NEVER_REFRESH;
+    }
+
+    public CachingOptions(boolean doCaching, long expireAfter, long refreshFrequency) {
+        this.doCaching = doCaching;
+        this.expireAfter = expireAfter;
+        this.refreshFrequency = refreshFrequency;
     }
 
     public boolean doCaching() {
